@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>道家智慧助手</title>
+    <style>
+        body {
+            font-family: 'SimSun', serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        .taiji {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(to right, white 50%, black 50%);
+            border-radius: 50%;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .taiji::before, .taiji::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+        .taiji::before {
+            background: black;
+            top: 0;
+            left: 25px;
+        }
+        .taiji::after {
+            background: white;
+            bottom: 0;
+            left: 25px;
+        }
+        .question-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .question-box h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 16px;
+            resize: vertical;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #3e8e41;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>道家智慧助手</h1>
+        <div class="taiji"></div>
+        <p>道可道，非常道</p>
+    </div>
+
+    <div class="container" style="display: flex; flex-direction: column-reverse;">
+    <div class="question-section" style="flex: 1; padding: 10px;">
+        <h2>请问您有什么困惑？</h2>
+        <textarea placeholder="请输入您的问题" style="width: 100%; height: 150px;"></textarea>
+        <button style="margin-top: 10px;">寻求解答</button>
+    </div>
+    <div class="answer-section" style="flex: 1; padding: 10px; border-left: 1px solid #ccc;">
+        <h2>解答</h2>
+        <div class="answer-box" style="white-space: pre-wrap; line-height: 1.5;"></div>
+    </div>
+</div>
+
+    <script>
+        // 获取页面元素
+        const questionInput = document.querySelector('textarea');
+        const submitButton = document.querySelector('button');
+        const answerBox = document.querySelector('.answer-box');
+
+        // 获取答案的函数
+        function getAnswer(question) {
+            // 使用DeepSeek R1 API获取答案
+            const apiKey = "d3add944-a8e2-4b59-ad21-a4ea71b35a72";
+            const url = "https://ark.cn-beijing.volces.com/api/v3/chat/completions";
+            const data = {
+                model: "deepseek-v3-250324",
+                messages: [
+                    {role: "system", content: "你是人工智能助手."},
+                    {role: "user", content: question}
+                ]
+            };
+
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                const answer = data.choices[0].message.content;
+                answerBox.innerHTML = `<div class="answer">
+                    <h3>您的提问：${question}</h3>
+                    <p>${answer}</p>
+                </div>`;
+            })
+            .catch(error => {
+                let errorMessage = "获取答案时出错，请稍后再试。";
+                if (error.message.includes("NetworkError")) {
+                    errorMessage = "网络错误，请检查您的连接。";
+                } else if (error.message.includes("timeout")) {
+                    errorMessage = "请求超时，请稍后重试。";
+                } else if (error.message.includes("500")) {
+                    errorMessage = "服务器错误，请稍后重试。";
+                }
+                console.error("Error fetching answer:", error);
+                answerBox.innerHTML = `<p>${errorMessage}</p>`;
+            });
+        }
+
+        // 按钮点击事件处理函数
+        submitButton.addEventListener('click', function() {
+            // 1. 获取用户输入的问题
+            const question = questionInput.value.trim();
+            
+            // 2. 检查问题是否为空
+            if (!question) {
+                alert('请输入您的问题');
+                return;
+            }
+            
+            // 3. 显示加载状态
+            answerBox.innerHTML = '<p>正在思考中...</p>';
+            
+            // 4. 调用获取答案的函数
+            getAnswer(question);
+        });
+    </script>
+</body>
+</html>
